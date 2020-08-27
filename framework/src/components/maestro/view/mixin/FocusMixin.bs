@@ -44,6 +44,9 @@ end function
 '  * @param {boolean} forceSet - will set focus, even if the focus lock is on
 '  */
 function setFocus(node, forceSet = false)
+  if node <> invalid
+    logDebug("setting focus on ", node.id)
+  end if
   m.global.focusManager@.setFocusOn(node, forceSet)
 end function
 
@@ -73,12 +76,12 @@ end function
 '  * @param {boolean} - isLocked
 '  * @param {string} - focusLockReason - the reason for locking - this will appear in logging output
 '  */
-function setFocusLocked(isLocked, focusLockReason = "")
-  m.global.focusManager@.setFocusLocked(isLocked, focusLockReason)
+function setFocusLocked(node, focusLockReason = "")
+  m.global.focusManager@.setFocusLocked(node, focusLockReason)
 end function
 
 function onIsFocusedChange()
-  logInfo("m.top.isFocused", m.top.isFocused, MU.dv(m.top))
+  ' logInfo("m.top.isFocused", m.top.isFocused, MU.dv(m.top))
   
   if m.top.isFocused
     onGainedFocus(true)
@@ -116,7 +119,9 @@ function onGainedFocus(isSelfFocused)
 
     if m.vm.onGainedFocus <> invalid
       m.vm.onGainedFocus(isSelfFocused)
-    else if MVMM.onFocusIdChange <> invalid
+    end if
+    
+    if MVMM.onFocusIdChange <> invalid
       MVMM.onFocusIdChange(m.vm.focusId) 
     end if
     

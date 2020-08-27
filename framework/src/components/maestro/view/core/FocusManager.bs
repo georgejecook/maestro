@@ -1,4 +1,4 @@
-import "pkg:/source/rLog/rLogMixin.bs"
+import "pkg:/source/rLog/rLogMixin.brs"
 import "pkg:/source/maestro/lib/Utils.bs"
 
 ' /**
@@ -9,9 +9,10 @@ import "pkg:/source/maestro/lib/Utils.bs"
 function init() as void
   registerLogger("FocusManager")
   m.top.observeField("_debugM", "onDebugMChange")
-  
+  m.focusTimer = m.top.findNode("focusTimer")
   m.wasShown = false
   m.isKeyPressLocked = false
+  m.lockedNode = invalid
 end function
 
 function onDebugMChange()
@@ -25,6 +26,8 @@ end function
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function setFocusOn(node, isForced = false) as void
+  ' logMethod("setFocusOn", node)
+  
   if m.top.isLocked
     if isForced
       logWarn("overriding setting locked focus (locked reason:", m.top.lockReason, ")")
@@ -46,6 +49,7 @@ function setFocusOn(node, isForced = false) as void
       _setFocusOn(node, parents)
     else
       logError("set focus to an off scene node! - in future this will set the focus to a backup-context node, to stop illegal focus scenarios")
+      _setFocusOn(node, parents)
     end if
   end if
   
@@ -56,18 +60,28 @@ function unsetFocusOn(node)
   node.setFocus(false)
 end function
 
-function setFocusLocked(isLocked, reason = "")
-  logWarn("setFocusLocked is currently disabled pending further testing")
-  return invalid
+function setFocusLocked(node, reason = "")
   
-  if isLocked
+  if node <> invalid
+    setFocusOn(node, true)
+    m.lockedNode = node
     logInfo("locking focus due to reason", reason)
+    m.focusTimer.control = "start"
   else
     logInfo("unlocking focus - previous lock reason:", m.top.lockReason)
+    m.focusTimer.control = "stop"
+    m.lockedNode = invalid
   end if
   
   m.top.lockReason = reason
-  m.top.isLocked = isLocked
+  m.top.isLocked = m.lockedNode <> invalid
+end function
+
+function onFocusTimerFire()
+  ' logInfo("onFocusTimerFire")
+  if m.focusedNode <> invalid
+    m.focusedNode.setFocus(true)
+  end if
 end function
 
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -75,11 +89,28 @@ end function
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function _setFocusOn(node, parents) as void
-  currentNode = m.top.focusedNode
   
-  if currentNode <> invalid
-    
-    if currentNode.doesExist("isFocused")
+  currentNode = m.top.focusedNode
+  isCurrentNode = false
+  if (node = invalid and currentNode = invalid) or (node <> invalid and node.isSamenode(currentNode))
+    if node <> invalid
+      if node.doesExist("isFocused")
+        node.isFocused = true
+      end if
+      if not node.isInFocusChain()
+        isCurrentNode = true
+      end if
+    end if
+
+    'FIXME - not sure why I put this line here!
+    ' if not isCurrentNode
+    '   return
+    ' end if
+  end if
+  
+  if currentNode <> invalid and not isCurrentNode
+    ' logInfo("setting focus on new node - unsetting focus on", currentNode.id) 
+    if currentNode.doesExist("isFocused") and currentNode.isFocused = true
       currentNode.isFocused = false
     end if
     
@@ -90,13 +121,21 @@ function _setFocusOn(node, parents) as void
   m.parents = parents
   
   if node <> invalid
+    if node.doesExist("drawFocusFeedback")
+      previousDrawFocusFeedback = node.drawFocusFeedback
+      node.drawFocusFeedback = false
+    end if
     
     node.setFocus(true)
     
-    if node.doesExist("isFocused")
-      node.isFocused = true
+    if node.doesExist("drawFocusFeedback")
+      node.drawFocusFeedback = previousDrawFocusFeedback
     end if
     
+    if node.doesExist("isFocused")
+      ' logInfo("setting node as focused, and telling parents", node.id)
+      node.isFocused = true
+    end if
     setFieldOnNodes(parents, "isChildFocused", true)
   else
     logError("set focus to invalid node! - in future this will set the focus to a backup-context node, to stop illegal focus scenarios")
@@ -106,14 +145,12 @@ end function
 function getParents(node)
   parent = node.getParent()
   parents = []
-  
   while (parent <> invalid)
     
     if parent.subType() = "ModelLocator"
       logWarn("trying to focus on a view that is not yet on the view hierarchy")
       return []
     end if
-
     parents.push(parent)
     parent = parent.getParent()
   end while
@@ -155,14 +192,16 @@ function isInScene(parents)
 end function
 
 function setFieldOnNodes(nodes, field, value)
-  
-  for i = 0 to nodes.count() - 2 'don't notify the scene
+  ' logInfo("--------------------------------START") 
+  for i = 0 to nodes.count() - 1
     node = nodes[i]
-    
-    if node.doesExist(field)
+    ' logInfo(i, "id", node.id)
+    if node.doesExist(field) and node[field] <> value
+      ' logInfo(field, "node[field]", node[field], value)
       node[field] = value
     end if
     
   end for
+  ' logInfo("--------------------------------END") 
   
 end function

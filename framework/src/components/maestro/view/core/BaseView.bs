@@ -2,6 +2,7 @@ import "pkg:/source/rLog/rLogMixin.bs"
 import "../mixin/FocusMixin.bs"
 import "../mixin/KeyMixin.bs"
 import "pkg:/source/maestro/lib/Utils.bs"
+import "pkg:/source/lib/ViewUtils.bs"
 
 ' /**
 '  * @module BaseView
@@ -10,8 +11,16 @@ import "pkg:/source/maestro/lib/Utils.bs"
 
 function init() as void
   m.modelLocator = m.global.modelLocator
+  if m.global.uid = invalid
+    m.global.addFields({ "uvid": 0 })
+    m.global.uvid++
+    m.top.__uvid = m.global.uvid
+  end if
+
   focusMixinInit()
   keyPressMixinInit()
+  
+  'TODO - guard these observers to not include in prod builds
   m.top.observeField("_debugM", "onDebugMChange")
   
   m.wasShown = false
@@ -107,13 +116,6 @@ end function
 '++ Lifecycle methods
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-function applyStyle()
-  styles = m.modelLocator.styles
-  localizations = m.modelLocator.localizations
-  assets = m.modelLocator.assets
-  _applyStyle(styles, localizations, assets)
-end function
-
 function _onShow(args) as void
   ' ? ">> base VIEW _ONSHOW " ; m.top.id ; " isShown " ; m.top.isShown
   oldIsShowing = m.top.isShown
@@ -157,11 +159,10 @@ function _onHide(args)
 end function
 
 function _initialize(args = invalid)
-  logMethod("initialize")
+  logMethod("initialize", m.top.subType(), m.top.__uvid)
   if not m.top.isInitialized
     m.top.isInitialized = true
     initialize(args)
-    applyStyle()
     m.top.observeField("visible", "onVisibleChange")
     if m.top.visible and not m.top.isShown
       _onShow(invalid)
@@ -174,16 +175,12 @@ end function
 function callVMFunc(funcName, p1 = "#M_NONE#", p2 = "#M_NONE#", p3 = "#M_NONE#")
   return MU.callAAFunc(m.vm, funcName, p1, p2, p3) 
 end function
+
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 '++ abstract lifecycle methods
 '+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
 function initialize(args)
-end function
-
-function _applyStyle(styles, localizations, assets)
-  'override me ; but this function should appear at the top of the script file, 
-  ' with the init method, for readability
 end function
 
 function onFirstShow()

@@ -1,34 +1,29 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<component name="BaseScreen"	extends="BaseView" >
+<component
+    name="BaseScreen"
+    extends="BaseView">
   <interface>
     <!-- Base view for all screens.
       provides common functions, which all screens require
      -->
     <!-- public fields/functions -->
-    
-    <!-- the context for the screen, if required.
-    This may differ from the modelLocator's currentSelection -->
-    <field id="content" type="node"/>
-
-    <!-- selection object, associated with this view -->
-    <field id="selection" type="node"/>
-
-    <field id="isLoading" type="boolean"/>
-    
-    <field id="isUserChangePending" type="boolean"/>
 
     <!-- return the screen displayed on top of this screen's stack -->
     <function name="_getTopScreen" />
 
     <!-- NavItem assoicated with this screen
     if you have a special field named navItem  -->
-    <field id="navItem" type="node" />
+    <field
+        id="navItem"
+        type="node" />
 
     <!-- navController support -->
-      <field id="navController" type="node" />
-      
-      <function name="onAddedToAggregateView" />
-      <function name="onRemovedFromAggregateView" />
-    
+    <field
+        id="navController"
+        type="node" />
+
+    <function name="onAddedToAggregateView" />
+    <function name="onRemovedFromAggregateView" />
+
   </interface>
 </component>
