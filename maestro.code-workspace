@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"path": "."
+		},
+		{
+			"path": "../maestro-roku-core"
+		},
+		{
+			"path": "../maestro-roku-list"
+		},
+		{
+			"path": "../maestro-roku-log"
+		}
+	],
+  "settings": {
+    "jira-plugin.workingProject": "",
+    "workbench.colorCustomizations": {
+      "statusBar.background": "#551A8B",
+      "statusBar.debuggingBackground": "#551A8B",
+      "panelTitle.activeBorder": "#ff0000",
+      "activityBar.background": "#163412",
+      "titleBar.activeBackground": "#1E4919",
+      "titleBar.activeForeground": "#F6FCF5"
+    }
+  }
+}

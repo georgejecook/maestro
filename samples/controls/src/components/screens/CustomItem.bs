@@ -1,4 +1,7 @@
+import "pkg:/source/roku_modules/mc/Utils.brs"
+
 function init()
+  mc.Utils.isArray()
   m.top.observeField("itemContent", "onItemContentChange")
   m.label = m.top.findNode("label")
 end function
